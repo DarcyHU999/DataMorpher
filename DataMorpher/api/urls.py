@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import get_random_number
+from .views import upload_file
 
 urlpatterns = [
-    path('random-number/', get_random_number),
+    path('upload-file/', upload_file),
 ]
