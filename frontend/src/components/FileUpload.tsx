@@ -146,10 +146,11 @@ const FileUpload: React.FC = () => {
                   <td>{dtype}</td>
                   <td>
                     <select defaultValue={dtype}>
+                      <option value='Complex'>Complex</option>
                       <option value='Date'>Date</option>
                       <option value='Int'>Int</option>
                       <option value='Float'>Float</option>
-                      <option value='String'>String</option>
+                      <option value='Text'>Text</option>
                       <option value='TimeDelta'>TimeDelta</option>
                       <option value='Bool'>Bool</option>
                       <option value='Category'>Category</option>
