@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import re
 
 def infer_data_types(file_path):
     try:
@@ -10,8 +11,8 @@ def infer_data_types(file_path):
         type_mapping = {
             'Int64': 'Int',            
             'Float64': 'Float',
-            'complex128': 'Complex',   # Added mapping for complex numbers
-            'string': 'Text',          # Changed 'String' to 'Text'
+            'complex128': 'Complex',
+            'string': 'Text',
             'datetime64[ns]': 'Date',
             'bool': 'Bool',
             'category': 'Category',
@@ -28,23 +29,11 @@ def infer_data_types(file_path):
 
             num_non_null = col_data.notna().sum()
             
-            # Try converting to complex numbers
-            def safe_to_complex(x):
-                try:
-                    return complex(x)
-                except:
-                    return np.nan
-            complex_col = col_data.apply(safe_to_complex)
-            num_complex = complex_col.notna().sum()
-            
             # Try converting to numeric (int or float)
             numeric_col = pd.to_numeric(col_data, errors='coerce')
             num_numeric = numeric_col.notna().sum()
-            
-            if num_complex / num_non_null >= 0.6:
-                inferred_type = 'Complex'
-                df[column] = complex_col.astype('complex128')
-            elif num_numeric / num_non_null >= 0.6:
+
+            if num_numeric / num_non_null >= 0.6:
                 # Check if integers
                 if np.all(numeric_col.dropna() == numeric_col.dropna().astype(int)):
                     inferred_type = 'Int'
@@ -53,20 +42,39 @@ def infer_data_types(file_path):
                     inferred_type = 'Float'
                     df[column] = numeric_col.astype('Float64')
             else:
-                # Try converting to datetime
-                datetime_col = pd.to_datetime(col_data, errors='coerce', infer_datetime_format=True)
-                num_datetime = datetime_col.notna().sum()
-
-                if num_datetime / num_non_null >= 0.6:
-                    inferred_type = 'Date'
-                    df[column] = datetime_col
+                # Try converting to complex numbers only if data contains complex patterns
+                # Define a regex pattern to detect complex numbers (e.g., '1+2j', '3-4j')
+                complex_pattern = re.compile(r'^-?\d+(\.\d+)?[+-]\d+(\.\d+)?j$', re.IGNORECASE)
+                
+                # Apply the pattern to each value
+                is_complex = col_data.dropna().astype(str).apply(lambda x: bool(complex_pattern.match(x)))
+                num_complex = is_complex.sum()
+                
+                if num_complex / num_non_null >= 0.6:
+                    # Convert to complex
+                    def safe_to_complex(x):
+                        try:
+                            return complex(x)
+                        except:
+                            return np.nan
+                    complex_col = col_data.apply(safe_to_complex)
+                    inferred_type = 'Complex'
+                    df[column] = complex_col.astype('complex128')
                 else:
-                    # Check if it's a category
-                    if num_unique / num_non_null <= 0.5:
-                        inferred_type = 'Category'
-                        df[column] = col_data.astype('category')
+                    # Try converting to datetime
+                    datetime_col = pd.to_datetime(col_data, errors='coerce', infer_datetime_format=True)
+                    num_datetime = datetime_col.notna().sum()
+
+                    if num_datetime / num_non_null >= 0.6:
+                        inferred_type = 'Date'
+                        df[column] = datetime_col
                     else:
-                        df[column] = col_data.astype('string')
+                        # Check if it's a category
+                        if num_unique / num_non_null <= 0.5:
+                            inferred_type = 'Category'
+                            df[column] = col_data.astype('category')
+                        else:
+                            df[column] = col_data.astype('string')
 
             inferred_types[column] = inferred_type
 
