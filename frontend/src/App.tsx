@@ -1,10 +1,10 @@
 import React from 'react';
-import FileUpload from './components/FileUpload';
+import FilePrep from './components/FilePrep';
 
 const App: React.FC = () => {
   return (
     <div>
-      <FileUpload />
+      <FilePrep />
     </div>
   );
 };
