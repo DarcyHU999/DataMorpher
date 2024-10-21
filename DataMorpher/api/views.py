@@ -27,8 +27,8 @@ def upload_file(request):
     if ext not in allowed_extensions:
         return Response({'error': 'Unsupported file type. Please upload a CSV or Excel file.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Validate file size (limit to 50MB)
-    max_file_size = 50 * 1024 * 1024  # 50MB
+    # Validate file size (limit to 100MB)
+    max_file_size = 100 * 1024 * 1024  # 50MB
     if file_obj.size > max_file_size:
         return Response({'error': 'File too large. Please upload a file smaller than 50MB.'}, status=status.HTTP_400_BAD_REQUEST)
 
